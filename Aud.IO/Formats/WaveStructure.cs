@@ -5,28 +5,28 @@ using System.Text;
 namespace Aud.IO.Formats
 {
     /// <summary>
-    /// En struktur til at gemme data med samme layout som i en WaveFile.
+    /// A structure that represents a Wave file, with the correct layout in memory.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct WaveStructure
     {
         /// <summary>
-        /// Magic byte/int, til at identificere filtypen.
-        /// Indeholder altid bogstaverne "RIFF".
-        /// Hvis filen er skrevet med big-endian, bruger man her "RIFX" i stedet for.
-        /// Big-endian ASCII streng.
+        /// Magic header, used to identify header.
+        /// Should spell out: "RIFF" in ASCII.
+        /// It spells "RIFX" instead, if the file is written with big-endianess.
+        /// Big-endian ASCII-string.
         /// </summary>
         public readonly uint ChunkID;
 
         /// <summary>
-        /// Den totale størrelse af al data efter dette felt.
+        /// The total size of all fields (including subchunks) beyond this field.
         /// </summary>
         public readonly uint ChunkSize;
 
         /// <summary>
-        /// Magic byte/int, til at identificere denne fils under-type.
-        /// Indeholder altid ordet "WAVE".
-        /// Big-endian ASCII streng.
+        /// Magic indicator, used to idenity the subtype of audio format.
+        /// Should always spell the word "WAVE" in ASCII.
+        /// Big-endian ASCII-string.
         /// </summary>
         public readonly uint Format;
 
@@ -42,12 +42,12 @@ namespace Aud.IO.Formats
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WaveStructure"/> struct.
-        /// Opret ny wavefil struktur kun ved hjælp af den data, som der er direkte brug for.
+        /// Create structure only using explicitly needed parameters.
         /// </summary>
-        /// <param name="numChannels">Antallet af kanaler, 1 er mono, 2 er stereo.</param>
-        /// <param name="sampleRate">Antallet af datapunkter gemt i sekundet.</param>
-        /// <param name="bitsPerSample">Antallet af bits gemt per datapunkt.</param>
-        /// <param name="data">Moduleret data.</param>
+        /// <param name="numChannels">The amount of channels, 1 corresponds to mono, 2 corresponds to stereo.</param>
+        /// <param name="sampleRate">The amount of samples provided per second.</param>
+        /// <param name="bitsPerSample">The amount of bits a single sample uses.</param>
+        /// <param name="data">PCM data.</param>
         public WaveStructure(ushort numChannels, uint sampleRate, ushort bitsPerSample, byte[] data)
         {
             ChunkID = BitConverter.ToUInt32(Encoding.ASCII.GetBytes("RIFF"), 0);
@@ -61,10 +61,10 @@ namespace Aud.IO.Formats
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WaveStructure"/> struct.
-        /// Opret ny wavefil struktur ud fra underblokke.
+        /// Create structure by providing subchunks.
         /// </summary>
-        /// <param name="formatSubchunk">Første underblok.</param>
-        /// <param name="dataSubchunk">Anden underblok.</param>
+        /// <param name="formatSubchunk">The subchunk containing metadata.</param>
+        /// <param name="dataSubchunk">The subchunk containing PCM data.</param>
         public WaveStructure(FormatSubchunk formatSubchunk, DataSubchunk dataSubchunk)
         {
             ChunkID = BitConverter.ToUInt32(Encoding.ASCII.GetBytes("RIFF"), 0);
@@ -83,26 +83,26 @@ namespace Aud.IO.Formats
     }
 
     /// <summary>
-    /// Beskriver det format lyden er gemt i.
+    /// Describes the audio format.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 24)]
     public readonly struct FormatSubchunk
     {
         /// <summary>
-        /// Indeholder altid teksten "fmt ".
-        /// Big-endian ASCII streng.
+        /// Contains the letters "fmt " in ASCII.
+        /// Big-endian ASCII-string.
         /// </summary>
         [FieldOffset(0)]
         public readonly uint ID;
 
         /// <summary>
-        /// Størrelse på Format subchunk.
+        /// The total size of all fields beyond this field.
         /// </summary>
         [FieldOffset(4)]
         public readonly uint Size;
 
         /// <summary>
-        /// Er altid 1.
+        /// Always 1.
         /// </summary>
         [FieldOffset(8)]
         public readonly ushort AudioFormat;
@@ -132,18 +132,18 @@ namespace Aud.IO.Formats
         public readonly ushort BlockAlign;
 
         /// <summary>
-        /// Størrelsen på ét punkt i opsamlingen.
+        /// The size of a single sample in bits.
         /// </summary>
         [FieldOffset(22)]
         public readonly ushort BitsPerSample;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FormatSubchunk"/> struct.
-        /// Udfyld værdier baseret på nødvendig data, udregn resten selv.
+        /// Create structure only using explicitly needed parameters, the rest is calculated.
         /// </summary>
-        /// <param name="numChannels">Antallet af kanaler, 1 er mono, 2 er steoro.</param>
-        /// <param name="sampleRate">Antallet af datapunkter gemt i sekundet.</param>
-        /// <param name="bitsPerSample">Størrelsen af et datapunkt.</param>
+        /// <param name="numChannels">The amount of channels, 1 corresponds to mono, 2 corresponds to steoro.</param>
+        /// <param name="sampleRate">The amount of samples provided per second.</param>
+        /// <param name="bitsPerSample">The size of a single sample in bits.</param>
         public FormatSubchunk(ushort numChannels, uint sampleRate, ushort bitsPerSample)
         {
             ID = BitConverter.ToUInt32(Encoding.ASCII.GetBytes("fmt "), 0);
@@ -158,14 +158,13 @@ namespace Aud.IO.Formats
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FormatSubchunk"/> struct.
-        /// 
         /// </summary>
-        /// <param name="audioFormat">Bør være 1.</param>
-        /// <param name="numChannels">Antallet af kanaler, 1 er mono, 2 er steoro.</param>
-        /// <param name="sampleRate">Antallet af datapunkter gemt i sekundet.</param>
-        /// <param name="byteRate">Antallet af bytes i sekundet.</param>
+        /// <param name="audioFormat">Always 1.</param>
+        /// <param name="numChannels">The amount of channels, 1 corresponds to mono, 2 corresponds to steoro.</param>
+        /// <param name="sampleRate">The amount of samples provided every second.</param>
+        /// <param name="byteRate">The amount of data in bytes provided every second.</param>
         /// <param name="blockAlign"></param>
-        /// <param name="bitsPerSample">Størrelsen af et datapunkt.</param>
+        /// <param name="bitsPerSample">The size of a single sample in bits.</param>
         public FormatSubchunk(ushort audioFormat, ushort numChannels, uint sampleRate, uint byteRate, ushort blockAlign, ushort bitsPerSample)
         {
             ID = BitConverter.ToUInt32(Encoding.ASCII.GetBytes("fmt "), 0);
@@ -181,14 +180,14 @@ namespace Aud.IO.Formats
     }
 
     /// <summary>
-    /// Størrelsen på lyddataen, og lyddataen selv.
+    /// Stores the PCM-data.
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct DataSubchunk
     {
         /// <summary>
-        /// Indeholder teksten "data".
-        /// Big-endian ASCII streng.
+        /// Always contains the text "data" in ASCII.
+        /// Big-endian ASCII-string.
         /// </summary>
         [FieldOffset(0)]
         public readonly uint ID;
@@ -200,7 +199,7 @@ namespace Aud.IO.Formats
         public readonly uint Size;
 
         /// <summary>
-        /// Selve lyden.
+        /// PCM-data.
         /// </summary>
         [FieldOffset(8)]
         public readonly byte[] Data;
@@ -208,7 +207,7 @@ namespace Aud.IO.Formats
         /// <summary>
         /// Initializes a new instance of the <see cref="DataSubchunk"/> struct.
         /// </summary>
-        /// <param name="data">Moduleret lyddata.</param>
+        /// <param name="data">PCM-data.</param>
         public DataSubchunk(byte[] data)
         {
             ID = BitConverter.ToUInt32(Encoding.ASCII.GetBytes("data"), 0);
