@@ -15,14 +15,14 @@ namespace Aud.IO.Formats
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WaveFile"/> class.
-        /// Læser og behandler lydfilen synkront.
+        /// Reads the audio file synchronously.
         /// </summary>
         /// <param name="filePath">Non-null string containing path to wavefile.</param>
-        /// <exception cref="ArgumentNullException">filePath er null.</exception>
-        /// <exception cref="FileNotFoundException">Filen blev ikke fundet.</exception>
-        /// <exception cref="UnknownFileFormatDescriptorException">Filens chunk ID var ikke 'RIFF'.</exception>
-        /// <exception cref="UnknownFileFormatException">Filens format ID var ikke 'WAVE'.</exception>
-        /// <exception cref="MissingSubchunkException">Filen indeholder ikke alle de nødvendige subchunks.</exception>
+        /// <exception cref="ArgumentNullException">filePath is null.</exception>
+        /// <exception cref="FileNotFoundException">The file was not found.</exception>
+        /// <exception cref="UnknownFileFormatDescriptorException">The file's format  isn't of type 'RIFF'.</exception>
+        /// <exception cref="UnknownFileFormatException">The file's format isn't of type 'WAVE'.</exception>
+        /// <exception cref="MissingSubchunkException">The file is missing a necessary subchunk.</exception>
         public WaveFile(string filePath)
             : base(filePath)
         {
@@ -31,7 +31,7 @@ namespace Aud.IO.Formats
                 throw new ArgumentNullException(nameof(filePath));
             }
 
-            // Kast exception hvis filen ikke eksisterer.
+            // Throw exception if file doesn't exist.
             using (FileStream stream = File.OpenRead(filePath))
             {
                 // Primary chunk
@@ -58,10 +58,10 @@ namespace Aud.IO.Formats
                 FormatSubchunk? formatSubchunk = null;
                 DataSubchunk? dataSubchunk = null;
 
-                // Læs subchunks indtil filen er færdig-læst.
+                // Keep reading subchunks untill EOF is reached.
                 while (stream.Length > stream.Position)
                 {
-                    // Aflæs subchunk ID
+                    // Read subchunk ID
                     byte[] subchunkIDBytes = new byte[sizeof(int)];
                     stream.Read(subchunkIDBytes, 0, subchunkIDBytes.Length);
                     byte[] subchunkSizeBytes = new byte[sizeof(uint)];
@@ -70,7 +70,7 @@ namespace Aud.IO.Formats
                     string subchunkID = Encoding.ASCII.GetString(subchunkIDBytes);
                     uint subchunkSize = BitConverter.ToUInt32(subchunkSizeBytes, 0);
 
-                    // Behandl subchunk baseret på dens ID.
+                    // Process subchunk based on ID.
                     switch (subchunkID)
                     {
                         case "fmt ":
@@ -95,7 +95,7 @@ namespace Aud.IO.Formats
                             dataSubchunk = new DataSubchunk(dataSubchunkBytes);
                             break;
                         default:
-                            // ukendt subchunk, ignorer den.
+                            // unknown subchunk format, ignore it.
                             stream.Seek(subchunkSize, SeekOrigin.Current);
                             break;
                     }
@@ -141,15 +141,15 @@ namespace Aud.IO.Formats
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WaveFile"/> class.
-        /// Læser og behandler lydfilen asynkront.
+        /// Reads the audio file asynchronously.
         /// </summary>
         /// <param name="filePath">Non-null string containing path to wavefile.</param>
-        /// <returns>Lydfilen.</returns>
-        /// <exception cref="ArgumentNullException">filePath er null.</exception>
-        /// <exception cref="FileNotFoundException">Filen blev ikke fundet.</exception>
-        /// <exception cref="UnknownFileFormatDescriptorException">Filens chunk ID var ikke 'RIFF'.</exception>
-        /// <exception cref="UnknownFileFormatException">Filens format ID var ikke 'WAVE'.</exception>
-        /// <exception cref="MissingSubchunkException">Filen indeholder ikke alle de nødvendige subchunks.</exception>
+        /// <returns>The audio file instance.</returns>
+        /// <exception cref="ArgumentNullException">filePath is null.</exception>
+        /// <exception cref="FileNotFoundException">The file was not found.</exception>
+        /// <exception cref="UnknownFileFormatDescriptorException">The file's format  isn't of type 'RIFF'.</exception>
+        /// <exception cref="UnknownFileFormatException">The file's format isn't of type 'WAVE'.</exception>
+        /// <exception cref="MissingSubchunkException">The file is missing a necessary subchunk.</exception>
         public static async Task<WaveFile> LoadFileAsync(string filePath)
         {
             if (filePath is null)
@@ -157,7 +157,7 @@ namespace Aud.IO.Formats
                 throw new ArgumentNullException(nameof(filePath));
             }
 
-            // Kast exception hvis filen ikke eksisterer.
+            // Throw exception if file doesn't exist.
             using (FileStream stream = File.OpenRead(filePath))
             {
                 // Primary chunk
@@ -184,10 +184,10 @@ namespace Aud.IO.Formats
                 FormatSubchunk? formatSubchunk = null;
                 DataSubchunk? dataSubchunk = null;
 
-                // Læs subchunks indtil filen er færdig-læst.
+                // Keep reading subchunks untill EOF is reached.
                 while (stream.Length > stream.Position)
                 {
-                    // Aflæs subchunk ID
+                    // Read subchunk ID.
                     byte[] subchunkIDBytes = new byte[sizeof(int)];
                     await stream.ReadAsync(subchunkIDBytes, 0, subchunkIDBytes.Length);
                     byte[] subchunkSizeBytes = new byte[sizeof(uint)];
@@ -196,7 +196,7 @@ namespace Aud.IO.Formats
                     string subchunkID = Encoding.ASCII.GetString(subchunkIDBytes);
                     uint subchunkSize = BitConverter.ToUInt32(subchunkSizeBytes, 0);
 
-                    // Behandl subchunk baseret på dens ID.
+                    // Read subchunk based on ID.
                     switch (subchunkID)
                     {
                         case "fmt ":
@@ -211,10 +211,10 @@ namespace Aud.IO.Formats
                                 BitConverter.ToUInt16(formatSubchunkBytes, 12),
                                 BitConverter.ToUInt16(formatSubchunkBytes, 14));
 
-                            // Hvis der er ukendte ekstra parametre (ifl. standarden er det muligt)
+                            // In case there are more parameters than expected (according to the standard)
                             if (formatSubchunkBytes.Length < subchunkSize)
                             {
-                                // Spring over dem.
+                                // Skip unknown parameters.
                                 stream.Seek(subchunkSize - formatSubchunkBytes.Length, SeekOrigin.Current);
                             }
 
@@ -226,7 +226,7 @@ namespace Aud.IO.Formats
                             dataSubchunk = new DataSubchunk(dataSubchunkBytes);
                             break;
                         default:
-                            // ukendt subchunk, ignorer den.
+                            // unknown subchunk, ignore it.
                             stream.Seek(subchunkSize, SeekOrigin.Current);
                             break;
                     }
@@ -247,7 +247,7 @@ namespace Aud.IO.Formats
         }
 
         /// <summary>
-        /// Returnerer den struktur wave-filen er gemt i.
+        /// Retrieves the structure which stores the wave file.
         /// </summary>
         /// <returns>Returnerer værdi-type.</returns>
         public WaveStructure GetWaveData() => waveData;
@@ -260,7 +260,7 @@ namespace Aud.IO.Formats
 
             float[] demodulatedAudio = new float[modulatedAudio.Length];
 
-            // At minus eksponenten med 1 svarer til at dividere med 2.
+            // Subtracting the exponent by 1 corresponds to dividing it by 2.
             float linearScalingFactor = (float)(Math.Pow(2, BitsPerSample - 1) - 1);
             for (int i = 0; i < modulatedAudio.Length; i++)
             {
@@ -286,7 +286,7 @@ namespace Aud.IO.Formats
 
             short[] modulatedAudio = new short[audio.Length];
 
-            // At minus eksponenten med 1 svarer til at dividere med 2.
+            // Subtracting the exponent by 1 corresponds to dividing it by 2.
             float linearScalingFactor = (float)(Math.Pow(2, BitsPerSample - 1) - 1);
             for (int i = 0; i < audio.Length; i++)
             {
