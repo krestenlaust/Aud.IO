@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="lydfil\440 frekvens 441 samplerate sinus ny.wav">
+    <None Update="fixture\440 kHz frequency 441 kHz samplerate sinus new.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
